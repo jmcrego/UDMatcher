@@ -61,7 +61,7 @@ Query one or more indices for matches in a sentence.
 
 Start the FastAPI server (default port 8000, or use --port 8001 if needed):
 ```bash
-uvicorn app:app --reload --port 8001
+uvicorn app:main --reload --port 8001
 ```
 
 
