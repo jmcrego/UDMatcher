@@ -41,13 +41,6 @@ Query one or more indices for matches in a sentence.
 }
 ```
 
-## Requirements
-- Python 3.8+
-- FastAPI
-- Uvicorn
-- pyahocorasick
-- python-multipart
-
 ## Setup
 
 ## Installation
