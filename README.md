@@ -23,23 +23,6 @@ Upload a TSV file (two columns: `<source term>\t<target term>`) and specify the 
 ### `POST /match`
 Query one or more indices for matches in a sentence.
 
-**Request (JSON):**
-```
-{
-  "sentence": "string",
-  "indices": ["index1", "index2", ...]
-}
-```
-
-**Response:**
-```
-{
-  "matches": [
-    {"index": "index1", "term": "matched_term", "start": 5},
-    ...
-  ]
-}
-```
 
 ## Setup
 
