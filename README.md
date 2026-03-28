@@ -62,7 +62,7 @@ curl -X POST "http://localhost:8001/upload" \
   -F "name=UD_enfr"
 ```
 
-### Match a Sentence against Indexes
+### Match a Sentence
 ```bash
 curl -X POST "http://localhost:8001/match" \
   -H "Content-Type: application/json" \
