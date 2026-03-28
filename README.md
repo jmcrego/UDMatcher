@@ -10,18 +10,17 @@ A FastAPI application for high-speed exact matching using multiple <b>AhoCorasic
 
 ## Endpoints
 
-- `GET /health`
+### `GET /health`
 Returns a list of loaded indices and their sizes (number of entries).
 
-- `POST /upload`
+### `POST /upload`
 Upload a TSV file (two columns: `<source term>\t<target term>`) and specify the index name. The server saves the file as `resources/NAME.tsv`, builds the index, saves it as `resources/NAME.pkl`, and loads it into memory.
 
 **Request (multipart/form-data):**
+- `file`: The TSV file
+- `name`: The desired index name (used for .tsv and .pkl files)
 
-  - `file`: The TSV file
-  - `name`: The desired index name (used for .tsv and .pkl files)
-
-- `POST /match`
+### `POST /match`
 Query one or more indices for matches in a sentence.
 
 
