@@ -19,6 +19,16 @@ class UDMatchResponse(BaseModel):
     matches: List[UDMatchResult]
     runtime_ms: float = 0
 
+
+def is_word_boundary(sentence: str, start: int, end: int) -> bool:
+    # Check left boundary
+    if start > 0 and sentence[start - 1].isalnum():
+        return False
+    # Check right boundary
+    if end + 1 < len(sentence) and sentence[end + 1].isalnum():
+        return False
+    return True
+
 def match_endpoint(request: UDMatchRequest) -> UDMatchResponse:
     results = []
     tic = time.perf_counter()
@@ -30,12 +40,13 @@ def match_endpoint(request: UDMatchRequest) -> UDMatchResponse:
             automaton = entry["automaton"]
             for end_pos, (source, target) in automaton.iter(request.sentence):
                 start_pos = end_pos - len(source) + 1
-                results.append(UDMatchResult(
-                    index=idx,
-                    source=source,
-                    target=target,
-                    start=start_pos,
-                    end=end_pos
-                ))
+                if is_word_boundary(request.sentence, start_pos, end_pos):
+                    results.append(UDMatchResult(
+                        index=idx,
+                        source=source,
+                        target=target,
+                        start=start_pos,
+                        end=end_pos
+                    ))
     runtime_s = time.perf_counter() - tic
     return UDMatchResponse(matches=results, runtime_ms=runtime_s * 1000)
