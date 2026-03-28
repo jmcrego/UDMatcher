@@ -1,4 +1,4 @@
-# FastAPI PyAhoCorasick Matcher
+# FastAPI AhoCorasick Matcher
 
 A FastAPI application for high-speed exact matching using multiple <b>AhoCorasick</b> indices. Supports concurrent requests, index upload, and health monitoring.
 
