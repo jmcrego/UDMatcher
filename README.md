@@ -17,6 +17,7 @@ Returns a list of loaded indices and their sizes (number of entries).
 Upload a TSV file (two columns: `<source term>\t<target term>`) and specify the index name. The server saves the file as `resources/NAME.tsv`, builds the index, saves it as `resources/NAME.pkl`, and loads it into memory.
 
 **Request (multipart/form-data):**
+
   - `file`: The TSV file
   - `name`: The desired index name (used for .tsv and .pkl files)
 
