@@ -28,7 +28,7 @@ Query one or more indices for matches in a sentence.
 
 ## Installation
 
-1. (Recommended) Create a virtual environment:
+1. Create a virtual environment (recommended):
   ```bash
   python3 -m venv .venv
   source .venv/bin/activate
