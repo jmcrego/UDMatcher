@@ -4,7 +4,7 @@ A FastAPI application for high-speed exact matching using multiple <b>AhoCorasic
 
 ## Preprocessing Glossaries and Queries
 
-- A glossary (TSV file) consists of two columns separated by tabs (\t): a <b>source-side term</b> (used for retrieval) and a <b>target-side term</b>.
+- A glossary (TSV file) consists of two columns separated by tabs '''\t''': a <b>source-side term</b> (used for retrieval) and a <b>target-side term</b>.
 ```
 my source term[\t]my target term
 ```
