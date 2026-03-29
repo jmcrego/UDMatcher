@@ -4,7 +4,7 @@ A FastAPI application for high-speed exact matching using multiple <b>AhoCorasic
 
 ## Preprocessing Glossaries and Queries
 
-- A glossary (TSV file) consists of two columns separated by [TAB] `\t`: a <b>source-side term</b> (used for retrieval) and a <b>target-side term</b>.
+- A glossary (TSV file) consists of two columns separated by [TAB] (`\t`): a <b>source-side term</b> (used for retrieval) and a <b>target-side term</b>.
 ```
 my source term[TAB]my target term
 ```
@@ -18,7 +18,8 @@ my source term[TAB]my target term
 An example of sentence containing the source term to be matched.
 ```
 
-- Matching is performed directly against the raw query string using exact or substring-based comparison.
+- Matching is performed using the Aho–Corasick algorithm over the raw query string.
+- A match is returned only if the span identified by the Aho–Corasick algorithm corresponds to a <b>full word match</b>, i.e. the matched substring is bounded by non-word characters (or string boundaries) and does not occur as part of a larger word.
 
 ## Features
 - Load all `*.pkl` indices from the `resources` directory at startup
