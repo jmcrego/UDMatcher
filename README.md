@@ -4,17 +4,23 @@ A FastAPI application for high-speed exact matching using multiple <b>AhoCorasic
 
 ## Preprocessing Glossaries and Queries
 
-- A glossary (TSV file) is composed of two columns, a source-side term (indexed for retrieval) and a target term. 
-- Source-side terms are NOT preprocessed before retrieval (case-sensitive matching is performed)
-
+- A glossary (TSV file) consists of two columns separated by tabs (\t): a <b>source-side term</b> (used for retrieval) and a <b>target-side term</b>.
 ```
-my source term\tmy target term
+my source term[\t]my target term
 ```
 
-The query contains a sentence field containing the string against which glossary entries (source-side) are matched.
+- Source-side terms are NOT preprocessed before indexing or matching. In particular:
+  - Matching is case-sensitive
+  - No normalization or tokenization is applied
+  - Punctuation and whitespace are preserved as-is
+
+
+- The query contains a sentence field with the input text in which glossary entries (source-side terms) are matched:
 ```
 An example of sentence containing the source term to be matched.
 ```
+
+- Matching is performed directly against the raw query string using exact or substring-based comparison.
 
 ## Features
 - Load all `*.pkl` indices from the `resources` directory at startup
