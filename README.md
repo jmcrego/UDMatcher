@@ -2,6 +2,20 @@
 
 A FastAPI application for high-speed exact matching using multiple <b>AhoCorasick</b> indices. Supports concurrent requests, index upload, and health monitoring.
 
+## Preprocessing Glossaries and Queries
+
+- A glossary (TSV file) is composed of two columns, a source-side term (indexed for retrieval) and a target term. 
+- Source-side terms are NOT preprocessed before retrieval (case-sensitive matching is performed)
+
+```
+my source term\tmy target term
+```
+
+The query contains a sentence field containing the string against which glossary entries (source-side) are matched.
+```
+An example of sentence containing the source term to be matched.
+```
+
 ## Features
 - Load all `*.pkl` indices from the `resources` directory at startup
 - `/health`: List available indices and their sizes
@@ -44,7 +58,7 @@ Query one or more indices for matches in a sentence.
 
 Start the FastAPI server (default port 8000, or use --port 8001 if needed):
 ```bash
-uvicorn app:main --reload --port 8001
+uvicorn app.main:app --reload --port 8001
 ```
 
 
