@@ -9,11 +9,9 @@ A FastAPI application for high-speed exact matching using multiple <b>AhoCorasic
 my source term[\t]my target term
 ```
 
-- Source-side terms are NOT preprocessed before indexing or matching. In particular:
+- Source-side terms are <b>NOT</b> preprocessed before indexing or matching. In particular:
   - Matching is case-sensitive
-  - No normalization or tokenization is applied
-  - Punctuation and whitespace are preserved as-is
-
+  - No normalization, tokenization or punctuation removal is applied
 
 - The query contains a sentence field with the input text in which glossary entries (source-side terms) are matched:
 ```
