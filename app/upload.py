@@ -4,7 +4,7 @@ import ahocorasick
 import pickle
 from collections import defaultdict
 
-from fastapi import UploadFile
+from fastapi import UploadFile, HTTPException
 from pydantic import BaseModel
 from .shared import indices, indices_lock, RESOURCES_DIR
 
@@ -18,32 +18,36 @@ def upload_endpoint(file: UploadFile, name: str) -> UDUploadResponse:
     Expects a TSV file with two columns: source and target.
     Creates an Aho-Corasick automaton from the source terms and saves it as a pickle file.
     """
-    inflect2uds = defaultdict(set) # one inflection can map to multiple UD terms (so we use a set to store them), but repeated keys are overwritten in the automaton, so we will store the full set of UDs in the value of the automaton
+    inflect_to_uds = defaultdict(set)
 
-    # Parse uploaded file line by line, build a dictionary of source -> set of targets
+    # Parse uploaded file line by line and aggregate all targets for each source term.
     for line in file.file:
-        # Each line is expected to be "ud<TAB>inflects"
-        # ud : source term ||| target term
-        # inflects : source term inflection1;source term inflection2;...
         line = line.decode("utf-8").rstrip("\n")
         parts = line.split("\t")
-        if len(parts) != 2:
+        if len(parts) < 2:
             continue
-        ud, inflects = parts
-        inflects = inflects.split(";")
-        for inflect in inflects:
-            if inflect:
-                inflect2uds[inflect].add(ud)
+        ud, inflects = parts[:2] 
+        ud = ud.strip()
+        inflects = inflects.strip().split(";")  # Assuming multiple inflects are semicolon-separated
+        if ud and inflects:
+            for inflect in inflects:
+                inflect_to_uds[inflect].add(ud)
+
+    if not inflect_to_uds:
+        raise HTTPException(
+            status_code=400,
+            detail="Uploaded file produced an empty index. Check TSV format and content."
+        )
 
     # Save the dictionary to disk (for record-keeping, not strictly necessary for the automaton)
-    tsv_path = os.path.join(RESOURCES_DIR, f"{name}.tsv")
-    with open(tsv_path, "w", encoding="utf-8") as out:
-        for inflect, uds in inflect2uds.items():
-            out.write(f"{inflect}\t{';'.join(uds)}\n")
+    # tsv_path = os.path.join(RESOURCES_DIR, f"{name}.tsv")
+    # with open(tsv_path, "w", encoding="utf-8") as out:
+    #     for inflect, uds in inflect_to_uds.items():
+    #         out.write(f"{inflect}\t{';'.join(sorted(uds))}\n")
 
     # Build Aho-Corasick automaton
     automaton = ahocorasick.Automaton()
-    for inflect, uds in inflect2uds.items():
+    for inflect, uds in inflect_to_uds.items():
         automaton.add_word(inflect, (inflect, uds))
     automaton.make_automaton()
 

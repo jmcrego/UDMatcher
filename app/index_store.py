@@ -12,6 +12,14 @@ def load_index(name: str):
         return False
     with open(pkl_path, "rb") as f:
         automaton = pickle.load(f)
+
+    # Backward compatibility: finalize trie objects saved before make_automaton().
+    if len(automaton) > 0:
+        try:
+            automaton.iter("")
+        except AttributeError:
+            automaton.make_automaton()
+
     with indices_lock:
         indices[name] = {"automaton": automaton, "size": len(automaton)}
     return True

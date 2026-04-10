@@ -34,19 +34,51 @@ def match_endpoint(request: UDMatchRequest) -> UDMatchResponse:
     tic = time.perf_counter()
     with indices_lock:
         for idx in request.indices:
+            print(f"Matching against index: {idx}")
             entry = indices.get(idx)
             if not entry:
+                print(f"Index not found: {idx}")
+                continue
+            if entry.get("size", 0) == 0:
                 continue
             automaton = entry["automaton"]
-            for end_pos, (source, target) in automaton.iter(request.sentence):
+            try:
+                iterator = automaton.iter(request.sentence)
+            except AttributeError:
+                # Backward compatibility for pickles saved as trie (not finalized automaton).
+                if len(automaton) == 0:
+                    continue
+                automaton.make_automaton()
+                iterator = automaton.iter(request.sentence)
+
+            print(f"Request sentence: '{request.sentence}'")
+            for end_pos, (source, target) in iterator:
+                print(f"Found match: source='{source}', target='{target}', end_pos={end_pos}")
                 start_pos = end_pos - len(source) + 1
-                if is_word_boundary(request.sentence, start_pos, end_pos):
+                if not is_word_boundary(request.sentence, start_pos, end_pos):
+                    continue
+
+                targets = target if isinstance(target, (set, list, tuple)) else [target]
+                for tgt in targets:
+                    print(f"Appending match: index='{idx}', source='{source}', target='{tgt}', start={start_pos}, end={end_pos}")
                     results.append(UDMatchResult(
                         index=idx,
                         source=source,
-                        target=target,
+                        target=str(tgt),
                         start=start_pos,
                         end=end_pos
                     ))
+    # Remove matches whose span is fully contained within a larger match's span
+    # from the same index.
+    filtered = [
+        r for r in results
+        if not any(
+            other.index == r.index
+            and (other.start <= r.start and other.end >= r.end)
+            and (other.start < r.start or other.end > r.end)
+            for other in results
+        )
+    ]
+
     runtime_s = time.perf_counter() - tic
-    return UDMatchResponse(matches=results, runtime_ms=runtime_s * 1000)
+    return UDMatchResponse(matches=filtered, runtime_ms=runtime_s * 1000)
