@@ -7,6 +7,7 @@ from collections import defaultdict
 from fastapi import UploadFile, HTTPException
 from pydantic import BaseModel
 from .shared import indices, indices_lock, RESOURCES_DIR
+from .cache import get_cache_manager
 
 class UDUploadResponse(BaseModel):
     status: str
@@ -55,6 +56,12 @@ def upload_endpoint(file: UploadFile, name: str) -> UDUploadResponse:
     pkl_path = os.path.join(RESOURCES_DIR, f"{name}.pkl")
     with open(pkl_path, "wb") as f:
         pickle.dump(automaton, f)
+    
     with indices_lock:
         indices[name] = {"automaton": automaton, "size": len(automaton)}
+    
+    # Invalidate cache when index changes
+    cache_manager = get_cache_manager()
+    cache_manager.clear()
+    
     return UDUploadResponse(status="ok", index=name, size=len(automaton))

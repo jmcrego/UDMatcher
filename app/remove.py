@@ -1,6 +1,7 @@
 from fastapi import HTTPException
 from pydantic import BaseModel
 from .shared import indices, indices_lock, RESOURCES_DIR
+from .cache import get_cache_manager
 import os
 
 
@@ -27,5 +28,10 @@ def remove_endpoint(request: UDRemoveRequest) -> UDRemoveResponse:
     tsv_path = os.path.join(RESOURCES_DIR, f"{name}.tsv")
     if os.path.exists(tsv_path):
         os.remove(tsv_path)
+    
+    # Invalidate cache when index is removed
+    cache_manager = get_cache_manager()
+    cache_manager.clear()
+    
     return UDRemoveResponse(status="removed", index=name)
 

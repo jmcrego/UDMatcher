@@ -10,48 +10,71 @@ from typing import List
 from .index_store import load_all_indices
 from .upload import upload_endpoint, UDUploadResponse
 from .match import match_endpoint, UDMatchRequest, UDMatchResponse
-
 from .health import health_endpoint, UDHealthResponse
 from .remove import remove_endpoint, UDRemoveRequest, UDRemoveResponse
+from .cache import get_cache_manager
+from .statistics import get_statistics_manager
 
-# Load existing indices on startup (this will be done in the lifespan context manager, when the app starts)
+# Application lifespan: startup and shutdown logic
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Startup: initialize cache backend and load indices
+    cache_manager = get_cache_manager()
+    stats_manager = get_statistics_manager()
+    print(f"Cache backend initialized: {cache_manager.cache_type.value} (enabled: {cache_manager.enabled})")
+    print(f"Statistics tracking initialized")
+    
     load_all_indices()
-    yield # marks the point where the app starts accepting requests
+    print(f"Indices loaded at startup")
+    
+    yield  # Application serving
+    
+    # Cleanup on shutdown (if needed)
+    print(f"Shutting down application")
 
-# FastAPI app
-app = FastAPI(lifespan=lifespan)
+# FastAPI application with async lifespan management
+app = FastAPI(
+    title="UDMatcher - Aho-Corasick Glossary Matcher",
+    description="High-speed exact glossary term matching with caching and statistics",
+    lifespan=lifespan
+)
 
-# Health check endpoint, returns list of loaded indices and their sizes
+
+# ============================================================================
+# ENDPOINTS
+# ============================================================================
+
+# GET /health - Health check with indices, cache status, and statistics
 @app.get("/health", response_model=UDHealthResponse)
 def health():
+    """Get service health status, loaded indices, cache status, and statistics."""
     return health_endpoint()
 
-# Upload endpoint, allows uploading files to create or update indices
+# POST /upload - Upload glossary and create/update index
 @app.post("/upload", response_model=UDUploadResponse)
 def upload(file: UploadFile = File(...), name: str = Form(...)):
+    """Upload a TSV glossary file (source<TAB>target) and create a searchable index."""
     return upload_endpoint(file, name)
 
 
-# Match endpoint, performs matching against the loaded indices (POST, JSON body)
+# POST /match - Query indices for glossary term matches
 @app.post("/match", response_model=UDMatchResponse)
 def match(request: UDMatchRequest):
+    """Query one or more indices for exact glossary term matches in a sentence."""
     return match_endpoint(request)
 
-# Match2 endpoint, performs matching using GET with query parameters
-# @app.get("/match2", response_model=UDMatchResponse)
-# def match2(sentence: str, indices: str):
-#     # indices is a comma-separated string
-#     indices_list = [i.strip() for i in indices.split(",") if i.strip()]
-#     return match_endpoint(UDMatchRequest(sentence=sentence, indices=indices_list))
-
-# Remove endpoint, deletes an index and its .pkl file
+# POST /remove - Remove an index
 @app.post("/remove", response_model=UDRemoveResponse)
 def remove(request: UDRemoveRequest):
+    """Delete an index from memory and disk."""
     return remove_endpoint(request)
 
-# CORS middleware
+
+# ============================================================================
+# MIDDLEWARE & CONFIGURATION
+# ============================================================================
+
+# CORS middleware - allow all origins for API access
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],

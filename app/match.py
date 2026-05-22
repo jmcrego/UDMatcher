@@ -1,8 +1,11 @@
 
 import time
+import json
 from pydantic import BaseModel
 from typing import List
 from .shared import indices, indices_lock
+from .cache import get_cache_manager
+from .statistics import get_statistics_manager
 
 class UDMatchRequest(BaseModel):
     sentence: str
@@ -18,6 +21,14 @@ class UDMatchResult(BaseModel):
 class UDMatchResponse(BaseModel):
     matches: List[UDMatchResult]
     runtime_ms: float = 0
+    cached: bool = False  # Indicates if result was served from cache
+
+
+def _make_cache_key(sentence: str, indices: List[str]) -> str:
+    """Create a cache key from request parameters."""
+    # Sort indices for consistent cache keys
+    sorted_indices = sorted(indices)
+    return json.dumps({"sentence": sentence, "indices": sorted_indices}, sort_keys=True)
 
 
 def is_word_boundary(sentence: str, start: int, end: int) -> bool:
@@ -30,8 +41,24 @@ def is_word_boundary(sentence: str, start: int, end: int) -> bool:
     return True
 
 def match_endpoint(request: UDMatchRequest) -> UDMatchResponse:
-    results = []
+    """Match endpoint with caching and statistics tracking."""
     tic = time.perf_counter()
+    cache_manager = get_cache_manager()
+    stats_manager = get_statistics_manager()
+    
+    # Try to get result from cache
+    cache_key = _make_cache_key(request.sentence, request.indices)
+    cached_result = cache_manager.get(cache_key)
+    
+    if cached_result is not None:
+        runtime_ms = (time.perf_counter() - tic) * 1000
+        stats_manager.record_request(runtime_ms, success=True, cache_hit=True)
+        print(f"Cache hit for: {cache_key}")
+        # Return cached result with cached flag set to True
+        return UDMatchResponse(matches=cached_result.matches, runtime_ms=runtime_ms, cached=True)
+    
+    # Cache miss - perform matching
+    results = []
     with indices_lock:
         for idx in request.indices:
             print(f"Matching against index: {idx}")
@@ -68,6 +95,7 @@ def match_endpoint(request: UDMatchRequest) -> UDMatchResponse:
                         start=start_pos,
                         end=end_pos
                     ))
+    
     # Remove matches whose span is fully contained within a larger match's span
     # from the same index.
     filtered = [
@@ -80,5 +108,14 @@ def match_endpoint(request: UDMatchRequest) -> UDMatchResponse:
         )
     ]
 
-    runtime_s = time.perf_counter() - tic
-    return UDMatchResponse(matches=filtered, runtime_ms=runtime_s * 1000)
+    runtime_ms = (time.perf_counter() - tic) * 1000
+    response = UDMatchResponse(matches=filtered, runtime_ms=runtime_ms, cached=False)
+    
+    # Store result in cache (without the cached flag for reuse)
+    cache_key_response = UDMatchResponse(matches=filtered, runtime_ms=0, cached=False)
+    cache_manager.put(cache_key, cache_key_response)
+    
+    # Record statistics
+    stats_manager.record_request(runtime_ms, success=True, cache_hit=False)
+    
+    return response
