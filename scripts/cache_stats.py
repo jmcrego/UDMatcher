@@ -5,7 +5,6 @@ Cache statistics and management utility for UDMatcher.
 Usage:
     python scripts/cache_stats.py stats       - Show cache statistics (requires running server)
     python scripts/cache_stats.py clear       - Clear cache via API (requires running server)
-    python scripts/cache_stats.py reset       - Reset statistics via API (requires running server)
     python scripts/cache_stats.py health      - Get full health check including stats
 """
 
@@ -89,14 +88,6 @@ def clear_cache(host: str = DEFAULT_HOST) -> None:
     print("To manually clear cache, restart the server.")
 
 
-def reset_statistics(host: str = DEFAULT_HOST) -> None:
-    """Reset statistics by re-uploading through API."""
-    # Note: The current API doesn't have a dedicated stats reset endpoint
-    # In production, this would call a dedicated endpoint
-    print("Statistics tracking is maintained across requests.")
-    print("To reset statistics, restart the server or modify the app to expose a reset endpoint.")
-
-
 def main():
     """Main CLI entry point."""
     if len(sys.argv) < 2:
@@ -111,8 +102,6 @@ def main():
         show_full_health()
     elif command == "clear":
         clear_cache()
-    elif command == "reset":
-        reset_statistics()
     elif command in ["-h", "--help", "help"]:
         print(__doc__)
     else:

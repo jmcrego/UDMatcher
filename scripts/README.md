@@ -19,8 +19,7 @@ Detailed cache and performance statistics display.
 ```bash
 python scripts/cache_stats.py stats         # Show cache statistics
 python scripts/cache_stats.py health        # Full health endpoint response
-python scripts/cache_stats.py clear         # Clear cache (note: resets on index change)
-python scripts/cache_stats.py reset         # Reset statistics (note: resets on server restart)
+python scripts/cache_stats.py clear         # Clear cache (note: clears on index change)
 ```
 
 ### 3. **test_basic_functionality.py**
